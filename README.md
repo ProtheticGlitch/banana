@@ -4,7 +4,7 @@
 
 1. Клонируйте репозиторий:
     
-    git clone <ссылка на репозиторий [https://github.com/ProtheticGlitch/banana]
+    git clone <ссылка на репозиторий [https://github.com/ProtheticGlitch/banana]>
     
     
 2. Создайте Telegram-бота:
