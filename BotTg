@@ -15,13 +15,21 @@ dp = Dispatcher(storage=storage)
 DATA_DIR = "user_data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# Вопросы для опроса
+QUESTIONS = [
+    "Работаешь ли ты официально?",
+    "Устраивает ли тебя твоя работа?",
+    "Хотел(а) бы сменить профессию в будущем?"
+]
+
 
 @dp.message(Command("start"))
 async def start(message: types.Message):
     user_id = message.from_user.id
-    user_data = {"user_id": user_id, "responses": []}
     file_path = os.path.join(DATA_DIR, f"{user_id}.json")
 
+    # Инициализация данных пользователя
+    user_data = {"user_id": user_id, "responses": []}
     if not os.path.exists(file_path):
         with open(file_path, 'w') as file:
             json.dump(user_data, file)
@@ -29,39 +37,88 @@ async def start(message: types.Message):
     else:
         await message.answer("С возвращением! Давай продолжим наш опрос.")
 
-    await send_question(message.chat.id)
+    # Сохранение начального индекса вопроса
+    user_data["current_question"] = 0
+    with open(file_path, 'w') as file:
+        json.dump(user_data, file, ensure_ascii=False, indent=4)
+
+    # Отправка первого вопроса
+    await send_question(message.chat.id, 0)
 
 
-async def send_question(chat_id):
-    question = "Работаешь ли ты официально?"
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Да", callback_data="yes"),
-                InlineKeyboardButton(text="Нет", callback_data="no")
-            ]
-        ]
+@dp.message(Command("help"))
+async def help_command(message: types.Message):
+    await message.answer(
+        "Этот бот предназначен для проведения простого опроса.\n"
+        "Команды:\n"
+        "/start - начать или продолжить опрос\n"
+        "/restart - начать опрос заново\n"
+        "/help - показать это сообщение"
     )
-    await bot.send_message(chat_id, question, reply_markup=keyboard)
+
+
+@dp.message(Command("restart"))
+async def restart(message: types.Message):
+    user_id = message.from_user.id
+    file_path = os.path.join(DATA_DIR, f"{user_id}.json")
+
+    if os.path.exists(file_path):
+        user_data = {"user_id": user_id, "responses": [], "current_question": 0}
+        with open(file_path, 'w') as file:
+            json.dump(user_data, file, ensure_ascii=False, indent=4)
+        await message.answer("Опрос начат заново.")
+        await send_question(message.chat.id, 0)
+    else:
+        await message.answer("Вы еще не начали опрос. Используйте /start, чтобы начать.")
+
+
+async def send_question(chat_id, question_index):
+    if question_index < len(QUESTIONS):
+        question = QUESTIONS[question_index]
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="Да", callback_data="yes"),
+                    InlineKeyboardButton(text="Нет", callback_data="no")
+                ]
+            ]
+        )
+        await bot.send_message(chat_id, question, reply_markup=keyboard)
+    else:
+        await bot.send_message(chat_id, "Опрос завершён. Спасибо за участие!")
 
 
 @dp.callback_query()
 async def process_answer(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
-    answer = "Да" if callback_query.data == "yes" else "Нет"
     file_path = os.path.join(DATA_DIR, f"{user_id}.json")
 
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             user_data = json.load(file)
+
+        # Сохранение ответа на текущий вопрос
+        current_question = user_data.get("current_question", 0)
+        answer = "Да" if callback_query.data == "yes" else "Нет"
         user_data["responses"].append({
-            "question": "Работаешь ли ты официально?",
+            "question": QUESTIONS[current_question],
             "answer": answer
         })
+
+        # Переход к следующему вопросу
+        current_question += 1
+        user_data["current_question"] = current_question
+
         with open(file_path, 'w') as file:
             json.dump(user_data, file, ensure_ascii=False, indent=4)
+
         await callback_query.answer("Ответ сохранен!")
-        await callback_query.message.answer("Спасибо за ответ!")
+
+# Отправка следующего вопроса или завершение опроса
+        if current_question < len(QUESTIONS):
+            await send_question(callback_query.message.chat.id, current_question)
+        else:
+            await callback_query.message.answer("Опрос завершён. Спасибо за участие!")
     else:
         await callback_query.answer("Ошибка: пользователь не найден.")
 
