@@ -5,7 +5,7 @@
 1. Клонируйте репозиторий:
     
     git clone <ссылка на репозиторий [https://github.com/ProtheticGlitch/banana]>
-    
+    ссылка на бота [@smngr_bot]
     
 2. Создайте Telegram-бота:
     - Перейдите в Telegram, найдите @BotFather и создайте нового бота.
