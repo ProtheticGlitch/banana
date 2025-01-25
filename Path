@@ -1,4 +1,3 @@
-рома, [18.01.2025 15:35]
 import json
 import os
 from aiogram import Bot, Dispatcher, types
@@ -7,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 import asyncio
 
-API_TOKEN = "8040083436:AAEWNFyjRR0eW9itULH8QzNCfYcyXcM5sk4"
+API_TOKEN = ""
 
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
@@ -29,7 +28,6 @@ async def start(message: types.Message):
     user_id = message.from_user.id
     file_path = os.path.join(DATA_DIR, f"{user_id}.json")
 
-    # Инициализация данных пользователя
     user_data = {"user_id": user_id, "responses": []}
     if not os.path.exists(file_path):
         with open(file_path, 'w') as file:
@@ -38,12 +36,10 @@ async def start(message: types.Message):
     else:
         await message.answer("С возвращением! Давай продолжим наш опрос.")
 
-    # Сохранение начального индекса вопроса
     user_data["current_question"] = 0
     with open(file_path, 'w') as file:
         json.dump(user_data, file, ensure_ascii=False, indent=4)
 
-    # Отправка первого вопроса
     await send_question(message.chat.id, 0)
 
 
@@ -98,7 +94,6 @@ async def process_answer(callback_query: types.CallbackQuery):
         with open(file_path, 'r') as file:
             user_data = json.load(file)
 
-        # Сохранение ответа на текущий вопрос
         current_question = user_data.get("current_question", 0)
         answer = "Да" if callback_query.data == "yes" else "Нет"
         user_data["responses"].append({
@@ -106,7 +101,6 @@ async def process_answer(callback_query: types.CallbackQuery):
             "answer": answer
         })
 
-        # Переход к следующему вопросу
         current_question += 1
         user_data["current_question"] = current_question
 
@@ -115,15 +109,12 @@ async def process_answer(callback_query: types.CallbackQuery):
 
         await callback_query.answer("Ответ сохранен!")
 
-рома, [18.01.2025 15:35]
-# Отправка следующего вопроса или завершение опроса
         if current_question < len(QUESTIONS):
             await send_question(callback_query.message.chat.id, current_question)
         else:
             await callback_query.message.answer("Опрос завершён. Спасибо за участие!")
     else:
         await callback_query.answer("Ошибка: пользователь не найден.")
-
 
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
