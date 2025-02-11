@@ -13,8 +13,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 
 FILE_ENCODING = "utf-8"
-API_TOKEN = "8197644620:AAF3xqwyhop-4XpMPPhczjPTMldEzs_mnZE"
-ADMIN_IDS = [1467310153, 1456535790]
+API_TOKEN = ""
+ADMIN_IDS = [,]
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
