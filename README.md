@@ -33,7 +33,6 @@
 1. Клонируйте репозиторий:
 ```bash
 git clone https://github.com/ProtheticGlitch/banana
-cd your-repo-name
 ```
 
 2. Создайте виртуальное окружение и активируйте его:
